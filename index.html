@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技能五子棋</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-orbit"></div>
+    <main class="game-shell">
+        <header class="hero">
+            <div class="hero__titles">
+                <h1>技能五子棋</h1>
+                <p>外练筋骨皮，内练五子棋。</p>
+            </div>
+            <div class="hero__controls">
+                <label class="selector">
+                    <span>敌人选择</span>
+                    <select id="enemy-select">
+                        <option value="ziqi">子棋 · 初始对手</option>
+                        <option value="jinengwu">技能五 · 怒涛攻势</option>
+                        <option value="wangjinbao">王金宝 · 稳如泰山</option>
+                    </select>
+                </label>
+                <button id="start-button" class="primary-btn">重新开局</button>
+            </div>
+        </header>
+
+        <section class="status-panel">
+            <div class="status-card">
+                <h2>当前回合</h2>
+                <p id="turn-indicator">等待开局…</p>
+            </div>
+            <div class="status-card">
+                <h2>战况简报</h2>
+                <div id="status-log" class="status-log"></div>
+            </div>
+            <div class="status-card">
+                <h2>技能冷却</h2>
+                <ul id="cooldown-display" class="cooldown-list"></ul>
+            </div>
+        </section>
+
+        <section class="battlefield">
+            <aside class="skill-panel" aria-label="玩家技能">
+                <h2>张呈的秘技</h2>
+                <div id="player-skills" class="skill-grid"></div>
+            </aside>
+
+            <div class="board-wrapper">
+                <div id="board" class="board" role="grid" aria-label="15x15 五子棋棋盘"></div>
+                <div class="board-overlay" id="board-overlay" hidden></div>
+            </div>
+
+            <aside class="skill-panel" aria-label="敌人技能">
+                <h2 id="enemy-title">敌方技能</h2>
+                <div id="enemy-skills" class="skill-grid enemy"></div>
+            </aside>
+        </section>
+
+        <section class="intel">
+            <div class="intel__card">
+                <h3>技能说明</h3>
+                <ul>
+                    <li><strong>飞沙走石</strong>：驱散敌子并封锁目标位置一回合。</li>
+                    <li><strong>静如止水</strong>：冻结敌方一回合，我方连走两手。</li>
+                    <li><strong>力拔山兮</strong>：选定 6x6 区域摧毁，使之无法落子。</li>
+                    <li><strong>东山再起</strong>：牺牲两枚己子，恢复全部摧毁区域。</li>
+                    <li><strong>调呈离山</strong>：移动敌子并封锁原位置一回合。</li>
+                </ul>
+            </div>
+            <div class="intel__card">
+                <h3>操控提示</h3>
+                <p>技能亮起时点击启用，再根据提示在棋盘上选择目标。被摧毁或封锁的格子会以特殊效果标记。</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>以技巧与智慧征服对手，掌握技能流五子棋！</p>
+        </footer>
+    </main>
+    <script src="script.js" defer></script>
+</body>
+</html>
