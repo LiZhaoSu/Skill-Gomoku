@@ -87,26 +87,31 @@ const state = {
     moveHistory: [],
 };
 
-const elements = {
-    board: document.getElementById('board'),
-    overlay: document.getElementById('board-overlay'),
-    turnIndicator: document.getElementById('turn-indicator'),
-    statusLog: document.getElementById('status-log'),
-    cooldownDisplay: document.getElementById('cooldown-display'),
-    enemyTitle: document.getElementById('enemy-title'),
-    playerSkills: document.getElementById('player-skills'),
-    enemySkills: document.getElementById('enemy-skills'),
-    startButton: document.getElementById('start-button'),
-    enemySelect: document.getElementById('enemy-select'),
-};
+const elements = {};
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', initializeGame);
+
+function initializeGame() {
+    cacheElements();
     createBoard();
     buildSkillPanels();
     elements.startButton.addEventListener('click', startGame);
     elements.enemySelect.addEventListener('change', handleEnemyChange);
     startGame();
-});
+}
+
+function cacheElements() {
+    elements.board = document.getElementById('board');
+    elements.overlay = document.getElementById('board-overlay');
+    elements.turnIndicator = document.getElementById('turn-indicator');
+    elements.statusLog = document.getElementById('status-log');
+    elements.cooldownDisplay = document.getElementById('cooldown-display');
+    elements.enemyTitle = document.getElementById('enemy-title');
+    elements.playerSkills = document.getElementById('player-skills');
+    elements.enemySkills = document.getElementById('enemy-skills');
+    elements.startButton = document.getElementById('start-button');
+    elements.enemySelect = document.getElementById('enemy-select');
+}
 
 function handleEnemyChange() {
     const selected = elements.enemySelect.value;
