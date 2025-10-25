@@ -37,31 +37,33 @@ const SKILL_DEFINITIONS = {
     },
 };
 
+const ALL_SKILLS = ['sandstorm', 'stillwater', 'mountainBreaker', 'rebirth', 'shift'];
+
 const ENEMY_PROFILES = {
     ziqi: {
         id: 'ziqi',
         name: '子棋',
         subtitle: '基础对手',
-        skills: ['sandstorm'],
+        skills: ['sandstorm', 'shift', 'stillwater', 'mountainBreaker', 'rebirth'],
         personality: 'basic',
     },
     jinengwu: {
         id: 'jinengwu',
         name: '技能五',
-        subtitle: '怒涛攻势',
-        skills: ['sandstorm', 'mountainBreaker', 'shift'],
-        personality: 'aggressive',
+        subtitle: '高级敌人',
+        skills: ['sandstorm', 'stillwater', 'mountainBreaker', 'shift', 'rebirth'],
+        personality: 'advanced',
     },
     wangjinbao: {
         id: 'wangjinbao',
         name: '王金宝',
-        subtitle: '稳中求胜',
-        skills: ['sandstorm', 'stillwater', 'rebirth'],
-        personality: 'defensive',
+        subtitle: 'Soulslike难度',
+        skills: ['stillwater', 'sandstorm', 'mountainBreaker', 'shift', 'rebirth'],
+        personality: 'soulslike',
     },
 };
 
-const PLAYER_LOADOUT = ['sandstorm', 'stillwater', 'mountainBreaker', 'rebirth', 'shift'];
+const PLAYER_LOADOUT = [...ALL_SKILLS];
 
 const state = {
     board: [],
@@ -123,7 +125,8 @@ function startGame() {
     resetState();
     renderBoard();
     updateEnemySkillPanel();
-    logStatus(`对战开启！张呈挑战 <span>${state.currentEnemy.name}</span>。`);
+    const { name, subtitle } = state.currentEnemy;
+    logStatus(`对战开启！张呈挑战 <span>${name}</span>（${subtitle}）。`);
     beginTurn(PLAYERS.HUMAN);
 }
 
@@ -199,6 +202,10 @@ function handleCellClick(event) {
     placePiece(x, y, PLAYERS.HUMAN);
     logStatus(`张呈落子于 (${x + 1}, ${y + 1})。`);
     if (checkWin(x, y, PLAYERS.HUMAN)) {
+        if (state.currentEnemy.personality === 'soulslike') {
+            triggerWangjinbaoDenial(x, y);
+            return;
+        }
         endGame('张呈以绝妙的连线夺冠！');
         return;
     }
@@ -306,7 +313,10 @@ function concludeTurn(player) {
     } else {
         if (state.skipTurns.player > 0) {
             state.skipTurns.player -= 1;
-            logStatus('张呈被静止，错失一手。');
+            const skipMessage = state.currentEnemy.personality === 'soulslike'
+                ? `${state.currentEnemy.name} 压制攻势，张呈无缘落子。`
+                : '张呈被静止，错失一手。';
+            logStatus(skipMessage);
             beginTurn(PLAYERS.AI);
             return;
         }
@@ -365,7 +375,7 @@ function buildSkillPanels() {
 }
 
 function updateEnemySkillPanel() {
-    elements.enemyTitle.textContent = `${state.currentEnemy.name}的秘技`;
+    elements.enemyTitle.textContent = `${state.currentEnemy.name} · ${state.currentEnemy.subtitle}`;
     elements.enemySkills.innerHTML = '';
     state.currentEnemy.skills.forEach((id) => {
         const skill = SKILL_DEFINITIONS[id];
@@ -611,6 +621,21 @@ function handleShiftTarget(x, y) {
     finalizeSkill('shift');
 }
 
+function triggerWangjinbaoDenial(x, y) {
+    const key = `${x},${y}`;
+    removePiece(x, y);
+    state.moveHistory.pop();
+    state.destroyedCells.add(key);
+    state.tempBlocks = state.tempBlocks.filter((block) => block.cell !== key);
+    state.tempBlocks.push({ cell: key, target: PLAYERS.HUMAN, remaining: 3 });
+    refreshBlockedClasses();
+    updateCellClasses(x, y);
+    state.skipTurns.player += 1;
+    elements.turnIndicator.textContent = '王金宝怒喝：“胜负未定！”';
+    logStatus('<span>王金宝</span> 否认败局，将胜势连线撕裂，还令张呈错失一手。');
+    concludeTurn(PLAYERS.HUMAN);
+}
+
 function checkWin(x, y, player) {
     const directions = [
         { dx: 1, dy: 0 },
@@ -681,8 +706,11 @@ function chooseAiMove() {
     if (personality === 'basic') {
         return pickBasicMove(available);
     }
-    if (personality === 'aggressive') {
-        return pickWeightedMove(available, 1.3, 1.0);
+    if (personality === 'advanced') {
+        return pickAdvancedMove(available);
+    }
+    if (personality === 'soulslike') {
+        return pickSoulslikeMove(available);
     }
     return pickWeightedMove(available, 1.0, 1.3);
 }
@@ -729,6 +757,42 @@ function pickWeightedMove(available, attackWeight, defenseWeight) {
         }
     });
     return best || available[0];
+}
+
+function pickAdvancedMove(available) {
+    const winMove = findImmediateWin(available, PLAYERS.AI);
+    if (winMove) return winMove;
+    
+    const blockMove = findImmediateWin(available, PLAYERS.HUMAN);
+    if (blockMove) return blockMove;
+    
+    return pickWeightedMove(available, 1.5, 1.2);
+}
+
+function pickSoulslikeMove(available) {
+    const winMove = findImmediateWin(available, PLAYERS.AI);
+    if (winMove) return winMove;
+    
+    const blockMove = findImmediateWin(available, PLAYERS.HUMAN);
+    if (blockMove) return blockMove;
+    
+    return pickWeightedMove(available, 2.0, 1.8);
+}
+
+function findImmediateWin(available, player) {
+    for (const { x, y } of available) {
+        if (wouldWin(x, y, player)) {
+            return { x, y };
+        }
+    }
+    return null;
+}
+
+function wouldWin(x, y, player) {
+    state.board[y][x] = player;
+    const result = checkWin(x, y, player);
+    state.board[y][x] = null;
+    return result;
 }
 
 function evaluatePotential(x, y, player) {
@@ -784,7 +848,17 @@ function maybeUseAiSkill() {
     if (availableSkills.length === 0) return;
 
     const personality = state.currentEnemy.personality;
-    if (personality === 'basic' && Math.random() > 0.35) {
+    let useChance = 0.35;
+    
+    if (personality === 'basic') {
+        useChance = 0.25;
+    } else if (personality === 'advanced') {
+        useChance = 0.55;
+    } else if (personality === 'soulslike') {
+        useChance = 1;
+    }
+    
+    if (Math.random() > useChance) {
         return;
     }
 
@@ -817,7 +891,9 @@ function attemptAiSkill(skillId) {
 }
 
 function aiSandstorm() {
-    const targets = findThreateningPieces(PLAYERS.HUMAN, 4);
+    const personality = state.currentEnemy.personality;
+    const threshold = personality === 'soulslike' ? 3 : 4;
+    const targets = findThreateningPieces(PLAYERS.HUMAN, threshold);
     const target = targets[0] || findAnyPiece(PLAYERS.HUMAN);
     if (!target) return false;
     return performSandstorm(target.x, target.y, PLAYERS.AI);
@@ -843,7 +919,9 @@ function aiMountainBreaker() {
             }
         }
     }
-    if (!bestArea || bestScore < 6) return false;
+    const personality = state.currentEnemy.personality;
+    const minScore = personality === 'soulslike' ? 4 : 6;
+    if (!bestArea || bestScore < minScore) return false;
     return performMountainBreaker(bestArea.x, bestArea.y, PLAYERS.AI);
 }
 
